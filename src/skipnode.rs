@@ -16,14 +16,3 @@ impl<T> SkipNode<T> {
         }
     }
 }
-
-impl<T> Drop for SkipNode<T> {
-    //drop nodes recursively
-    fn drop(&mut self) {
-        unsafe {
-            if let Some(next) = self.next[0] {
-                Box::from_raw(next.as_ptr());
-            }
-        }
-    }
-}
