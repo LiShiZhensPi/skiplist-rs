@@ -64,7 +64,7 @@ where
         self.len == 0
     }
 
-    fn insert(&mut self, key: T) {
+    pub fn insert(&mut self, key: T) {
         unsafe {
             let mut node = &self.head;
             let mut level = self.max_level - 1;
@@ -95,7 +95,7 @@ where
 
             //insert
 
-            //convert,maybe use 'from' and 'into' is better?
+            //convert SkipNode to NonNull,maybe use 'from()' and 'into()' is better?
             let new_node = SkipNode::new(key, self.random_level());
             let mut p_new_node = NonNull::new_unchecked(Box::leak(Box::new(new_node)));
 
@@ -116,6 +116,38 @@ where
             self.len += 1;
         }
     }
+
+    pub fn find_greater_or_equal(&self, key: &T) -> Option<&T> {
+        unsafe {
+            let mut node = &self.head;
+            let mut level = self.max_level - 1;
+
+            loop {
+                while let Some(next) = node.next[level] {
+                    if &next.as_ref().key < key {
+                        node = next.as_ref();
+                    } else {
+                        break;
+                    }
+                }
+                if level > 0 {
+                    level -= 1;
+                } else {
+                    break;
+                }
+            }
+            if let Some(next) = node.next[level] {
+                Some(&next.as_ref().key)
+            } else {
+                None
+            }
+        }
+    }
+
+    pub fn find(&self, key: &T) -> Option<&T> {
+        self.find_greater_or_equal(key)
+            .and_then(|res| if res == key { Some(res) } else { None })
+    }
 }
 
 #[cfg(test)]
@@ -129,6 +161,14 @@ mod test {
         for i in 1..100 {
             list.insert(i);
             assert!(i == list.len() as i32);
+        }
+
+        for i in 1..100 {
+            assert!(list.find(&i) == Some(&i));
+        }
+
+        for i in 100..101 {
+            assert!(list.find(&i) == None)
         }
     }
 }
