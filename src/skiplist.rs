@@ -66,6 +66,7 @@ where
                 }
 
                 // How to convert &SkipNode<T> to NonNull<...>?
+                // https://doc.rust-lang.org/src/core/ptr/non_null.rs.html#792-802
                 prevs[level] = NonNull::from(node);
 
                 if level > 0 {
