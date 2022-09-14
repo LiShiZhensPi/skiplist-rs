@@ -1,28 +1,9 @@
 use std::{mem::MaybeUninit, ptr::NonNull};
 
 use crate::random::Random;
+use crate::skipnode::SkipNode;
 
 const DEFAULT_MAX_LEVL: usize = 12;
-
-type Link<T> = Option<NonNull<SkipNode<T>>>;
-struct SkipNode<T> {
-    key: T,
-    level: usize,
-    next: Vec<Link<T>>,
-}
-
-impl<T> SkipNode<T>
-where
-    T: Ord,
-{
-    fn new(key: T, level: usize) -> Self {
-        SkipNode {
-            key,
-            level,
-            next: vec![None; level],
-        }
-    }
-}
 
 pub struct SkipList<T> {
     head: SkipNode<T>,
