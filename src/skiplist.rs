@@ -1,5 +1,9 @@
 use std::{mem::MaybeUninit, ptr::NonNull};
 
+use crate::random::Random;
+
+const DEFAULT_MAX_LEVL: usize = 12;
+
 type Link<T> = Option<NonNull<SkipNode<T>>>;
 struct SkipNode<T> {
     item: T,
@@ -22,31 +26,34 @@ where
     }
 }
 
-struct SkipList<T> {
+pub struct SkipList<T> {
     head: SkipNode<T>,
     max_level: usize,
+    rnd: Random,
 }
 
 impl<T> SkipList<T>
 where
     T: Ord,
 {
-    fn new() -> Self {
-        const DEFAULT_MAX_LEVL: usize = 8;
+    pub fn new() -> Self {
         unsafe {
             SkipList {
                 head: SkipNode::new(MaybeUninit::<T>::uninit().assume_init(), DEFAULT_MAX_LEVL),
                 max_level: DEFAULT_MAX_LEVL,
+                rnd: Random::new(0xdeadbeef),
             }
         }
     }
-    fn new_with_level(max_level: usize) -> Self {
-        unsafe {
-            SkipList {
-                head: SkipNode::new(MaybeUninit::<T>::uninit().assume_init(), max_level),
-                max_level,
-            }
+
+    fn random_level(&mut self) -> usize {
+        // Increase height with probability 1 in kBranching
+        const k_branching: u32 = 4;
+        let mut level: usize = 1;
+        while level < self.max_level && self.rnd.one_in(k_branching) {
+            level += 1;
         }
+        level
     }
 }
 
@@ -56,7 +63,6 @@ mod test {
     #[test]
     fn skip_list_test() {
         let list = SkipList::<i32>::new();
-        const DEFAULT_MAX_LEVL: usize = 8;
         assert!(list.max_level == DEFAULT_MAX_LEVL);
     }
 }
