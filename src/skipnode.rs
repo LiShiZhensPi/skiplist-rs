@@ -7,10 +7,7 @@ pub struct SkipNode<T> {
     pub next: Vec<Link<T>>,
 }
 
-impl<T> SkipNode<T>
-where
-    T: Ord,
-{
+impl<T> SkipNode<T> {
     pub fn new(key: T, level: usize) -> Self {
         SkipNode {
             key,
