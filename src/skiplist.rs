@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use std::mem::MaybeUninit;
 use std::ptr::NonNull;
 
@@ -156,6 +157,39 @@ impl<T> Drop for SkipList<T> {
     }
 }
 
+pub struct Iter<'a, T: 'a> {
+    node: Option<NonNull<SkipNode<T>>>,
+    marker: PhantomData<&'a SkipNode<T>>,
+}
+
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.node.and_then(|node| unsafe {
+            let prev = node.as_ref();
+            self.node = node.as_ref().next[0];
+            Some(&prev.key)
+        })
+    }
+}
+
+impl<T> SkipList<T> {
+    pub fn iter(&self) -> Iter<'_, T> {
+        Iter {
+            node: self.head.next[0],
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<'a, T> IntoIterator for &'a SkipList<T> {
+    type Item = &'a T;
+    type IntoIter = Iter<'a, T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -182,5 +216,19 @@ mod test {
         }
 
         assert!(list.is_empty());
+    }
+
+    #[test]
+    fn skip_list_test_iter() {
+        let mut list = SkipList::<i32>::new();
+        for i in (0..100).rev() {
+            list.insert(i);
+        }
+
+        let mut index = 0;
+        for i in &list {
+            assert!(i == &index);
+            index += 1;
+        }
     }
 }
